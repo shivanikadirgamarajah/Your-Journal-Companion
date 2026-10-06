@@ -10,7 +10,7 @@ const links = [
 export default function Nav() {
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/70 backdrop-blur">
-      <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-1 py-3">
         <Link href="/journal" className="font-semibold tracking-tight">
           <span className="rounded-lg bg-zinc-900 px-2 py-1 text-white">J</span>{" "}
           Your Journal Companion

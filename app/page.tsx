@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     // The main container with padding
-    <main style={{ padding: 24 }}>
+    <main>
       {/* Page title */}
       <h1 style={{ fontSize: 24, fontWeight: 700 }}>Journal AI</h1>
       {/* Instructional text */}

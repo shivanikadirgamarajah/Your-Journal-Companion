@@ -39,7 +39,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
   <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-white text-zinc-900">
     <Nav />
-    <div className="mx-auto w-full max-w-4xl px-4 py-10">
+    <div className="mx-auto w-full max-w-7xl px-2 py-10">
       {children}
     </div>
   </div>
