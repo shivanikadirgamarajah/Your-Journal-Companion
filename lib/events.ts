@@ -1,7 +1,9 @@
+export type EventProps = Record<string, unknown>;
+
 export type Event = {
   name: string;
   userId: string;
-  props: Record<string, any>;
+  props: EventProps;
   timestamp: string;
 };
 
@@ -16,7 +18,7 @@ export function getEvents(): Event[] {
 export function trackEvent(
   name: string,
   userId: string,
-  props: Record<string, any> = {}
+  props: EventProps = {}
 ) {
   if (typeof window === "undefined") return;
 

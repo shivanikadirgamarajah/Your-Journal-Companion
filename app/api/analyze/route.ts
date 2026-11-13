@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
-
+import {
+  AIResponseValidationError,
+  parseExtractedSignals,
+  parseRiskAssessment,
+  parseCoachResponse,
+} from "@/lib/aiResponseValidation";
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 
-async function callLLM(systemPrompt: string, userInput: any) {
+type JsonObject = Record<string, unknown>;
+
+function isJsonObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function callLLM(systemPrompt: string, userInput: unknown): Promise<unknown> {
   if (!OPENROUTER_KEY) {
     throw new Error("Missing OPENROUTER_API_KEY in .env.local");
   }
@@ -31,8 +42,11 @@ async function callLLM(systemPrompt: string, userInput: any) {
     throw new Error(`OpenRouter HTTP ${resp.status}: ${rawText}`);
   }
 
-  const data = JSON.parse(rawText);
-  const content = data?.choices?.[0]?.message?.content?.trim();
+  const data = JSON.parse(rawText) as {
+    choices?: Array<{ message?: { content?: unknown } }>;
+  };
+  const rawContent = data.choices?.[0]?.message?.content;
+  const content = typeof rawContent === "string" ? rawContent.trim() : "";
 
   if (!content) throw new Error("No model content returned.");
 
@@ -45,23 +59,24 @@ async function callLLM(systemPrompt: string, userInput: any) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as JsonObject;
 
-    const entryText: string = body.entryText || "";
-    const recentEvents = body.recentEvents || [];
-    const eventFeatures = body.eventFeatures || {};
+    const entryText = typeof body.entryText === "string" ? body.entryText : "";
+    const recentEvents = Array.isArray(body.recentEvents) ? body.recentEvents : [];
+    const eventFeatures = isJsonObject(body.eventFeatures) ? body.eventFeatures : {};
 
     if (!entryText.trim()) {
       return NextResponse.json({ error: "Missing entryText" }, { status: 400 });
     }
 
-    const log: any[] = [];
+    const log: Array<{ agent: string; inputSummary: string; output: unknown }> = [];
 
     // ─────────────────────────────
     // AGENT 1: EXTRACTOR
     // ─────────────────────────────
-    const signals = await callLLM(
-      `Return ONLY valid JSON (no markdown, no extra text).
+    const signals = parseExtractedSignals(
+      await callLLM(
+        `Return ONLY valid JSON (no markdown, no extra text).
 
 Schema:
 {
@@ -81,6 +96,7 @@ Rules:
         recentEvents,
         eventFeatures,
       }
+      )
     );
 
     log.push({
@@ -92,8 +108,9 @@ Rules:
     // ─────────────────────────────
     // AGENT 2: RISK / SAFETY
     // ─────────────────────────────
-    const risk = await callLLM(
-      `Return ONLY valid JSON.
+    const risk = parseRiskAssessment(
+      await callLLM(
+        `Return ONLY valid JSON.
 
 Schema:
 {
@@ -112,6 +129,7 @@ Rules:
         signals,
         eventFeatures,
       }
+      )
     );
 
     log.push({
@@ -123,8 +141,9 @@ Rules:
     // ─────────────────────────────
     // AGENT 3: COACH / PLANNER
     // ─────────────────────────────
-    const coach = await callLLM(
-      `Return ONLY valid JSON.
+    const coach = parseCoachResponse(
+      await callLLM(
+        `Return ONLY valid JSON.
 
 Schema:
 {
@@ -152,6 +171,7 @@ Rules:
         recentEvents,
         eventFeatures,
       }
+      )
     );
 
     log.push({
@@ -170,12 +190,19 @@ Rules:
       tomorrowPrompt: coach.tomorrowPrompt,
       log,
     });
-  } catch (err: any) {
-    console.error("API /analyze error:", err);
+  } catch (error: unknown) {
+    if (error instanceof AIResponseValidationError) {
+      console.error("AI response validation failed:", error.message);
 
-    return NextResponse.json(
-      { error: err?.message || "Server error" },
-      { status: 500 }
-    );
+      return Response.json(
+        { error: "Invalid AI service response" },
+        { status: 502 }
+      );
+    }
+
+    console.error("API /analyze error:", error);
+
+    const message = error instanceof Error ? error.message : "Server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

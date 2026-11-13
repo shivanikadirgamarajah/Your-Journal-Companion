@@ -28,7 +28,7 @@ function readJSON<T>(key: string, fallback: T): T {
   return raw ? (JSON.parse(raw) as T) : fallback;
 }
 
-function writeJSON(key: string, value: any) {
+function writeJSON(key: string, value: unknown) {
   if (typeof window === "undefined") return;
   localStorage.setItem(key, JSON.stringify(value));
 }

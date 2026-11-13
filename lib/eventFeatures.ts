@@ -37,7 +37,9 @@ export function computeEventFeatures(events: Event[]): EventFeatures {
   }
 
   return {
-    completedRecIds: completed.map((e) => e.props?.rec_id).filter(Boolean),
+    completedRecIds: completed
+      .map((e) => e.props?.rec_id)
+      .filter((recId): recId is string => typeof recId === "string"),
     completionCount,
     mostCompletedRecId,
     avoidanceHint,

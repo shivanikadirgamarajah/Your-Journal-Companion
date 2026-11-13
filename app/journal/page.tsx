@@ -95,8 +95,9 @@ export default function JournalPage() {
 
       alert("Analysis complete! Go to Insights.");
       setText("");
-    } catch (e: any) {
-      alert("Analyze failed: " + (e?.message || "Unknown error"));
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Unknown error";
+      alert("Analyze failed: " + message);
     } finally {
       setIsAnalyzing(false);
     }
