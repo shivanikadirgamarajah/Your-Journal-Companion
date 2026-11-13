@@ -13,12 +13,9 @@ export default function JournalEntryPage({
 }) {
   const { id } = use(params);                    // <-- UNWRAP HERE
 
-  const [entry, setEntry] = useState<JournalEntry | null>(null);
+  const [entry] = useState<JournalEntry | null>(() => getEntryById(id));
 
   useEffect(() => {
-    const found = getEntryById(id);
-    setEntry(found);
-
     trackEvent("journal_entry_viewed", "demo-user", { entry_id: id });
   }, [id]);
 

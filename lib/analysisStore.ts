@@ -3,13 +3,19 @@ import type { AnalysisResult } from "@/lib/agents/orchestrator";
 const LATEST_KEY = "journal_ai_latest_analysis";
 const HISTORY_KEY = "journal_ai_analysis_history";
 
+export type AnalysisHistoryEntry = {
+  timestamp: string;
+  signals: AnalysisResult["signals"];
+  risk: AnalysisResult["risk"];
+};
+
 export function saveLatestAnalysis(result: AnalysisResult) {
   if (typeof window === "undefined") return;
 
   localStorage.setItem(LATEST_KEY, JSON.stringify(result));
 
   const historyRaw = localStorage.getItem(HISTORY_KEY);
-  const history = historyRaw ? (JSON.parse(historyRaw) as any[]) : [];
+  const history = historyRaw ? (JSON.parse(historyRaw) as AnalysisHistoryEntry[]) : [];
 
   history.push({
     timestamp: new Date().toISOString(),
@@ -28,8 +34,8 @@ export function loadLatestAnalysis(): AnalysisResult | null {
   return raw ? (JSON.parse(raw) as AnalysisResult) : null;
 }
 
-export function loadAnalysisHistory(): any[] {
+export function loadAnalysisHistory(): AnalysisHistoryEntry[] {
   if (typeof window === "undefined") return [];
   const raw = localStorage.getItem(HISTORY_KEY);
-  return raw ? (JSON.parse(raw) as any[]) : [];
+  return raw ? (JSON.parse(raw) as AnalysisHistoryEntry[]) : [];
 }

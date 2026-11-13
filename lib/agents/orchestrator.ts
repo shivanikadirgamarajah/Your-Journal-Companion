@@ -21,7 +21,7 @@ export type Recommendation = {
 export type AgentLogStep = {
   agent: string;
   inputSummary: string;
-  output: any;
+  output: unknown;
 };
 
 export type AnalysisResult = {

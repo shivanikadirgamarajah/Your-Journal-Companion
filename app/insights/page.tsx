@@ -1,19 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { loadLatestAnalysis, loadAnalysisHistory } from "@/lib/analysisStore";
 import type { AnalysisResult } from "@/lib/agents/orchestrator";
+import type { AnalysisHistoryEntry } from "@/lib/analysisStore";
 import SafetyBanner from "@/components/SafetyBanner";
 
 export default function InsightsPage() {
-  const [data, setData] = useState<AnalysisResult | null>(null);
-  const [history, setHistory] = useState<any[]>([]);
-
-  useEffect(() => {
-    setData(loadLatestAnalysis());
-    setHistory(loadAnalysisHistory());
-  }, []);
+  const [data] = useState<AnalysisResult | null>(() => loadLatestAnalysis());
+  const [history] = useState<AnalysisHistoryEntry[]>(() => loadAnalysisHistory());
 
   function exportSummary() {
     if (!data) return;

@@ -20,10 +20,18 @@ type AnalysisResult = {
 };
 
 export default function RecommendationsPage() {
-  const [active, setActive] = useState<Recommendation[]>([]);
-  const [prompt, setPrompt] = useState<string>("");
-  const [startedIds, setStartedIds] = useState<string[]>([]);
-  const [completedIds, setCompletedIds] = useState<string[]>([]);
+  const [active, setActive] = useState<Recommendation[]>(() => {
+    const latest = loadLatestAnalysis() as AnalysisResult | null;
+    return latest?.recommendations?.length
+      ? initActiveRecsFromAnalysis(latest.recommendations)
+      : [];
+  });
+  const [prompt, setPrompt] = useState<string>(() => {
+    const latest = loadLatestAnalysis() as AnalysisResult | null;
+    return latest?.recommendations?.length ? latest.tomorrowPrompt || "" : "";
+  });
+  const [startedIds, setStartedIds] = useState<string[]>(() => getStartedIds());
+  const [completedIds, setCompletedIds] = useState<string[]>(() => getCompletedIds());
 
   const startedSet = useMemo(() => new Set(startedIds), [startedIds]);
   const completedSet = useMemo(() => new Set(completedIds), [completedIds]);
@@ -34,26 +42,10 @@ export default function RecommendationsPage() {
   }
 
   useEffect(() => {
-    const latest = loadLatestAnalysis() as AnalysisResult | null;
-
-    if (!latest?.recommendations?.length) {
-      setActive([]);
-      setPrompt("");
-      refreshFlags();
-      return;
-    }
-
-    // Use analysis recs only if we don't already have active recs saved
-    const init = initActiveRecsFromAnalysis(latest.recommendations);
-    setActive(init);
-    setPrompt(latest.tomorrowPrompt || "");
-
     trackEvent("recommendation_viewed", "demo-user", {
-      count: init.length,
+      count: active.length,
     });
-
-    refreshFlags();
-  }, []);
+  }, [active.length]);
 
   function handleStart(rec: Recommendation) {
     if (completedSet.has(rec.id)) return;

@@ -1,18 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { clearEvents, Event, getEvents } from "@/lib/events";
 
 export default function AdminEventsPage() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<Event[]>(() => getEvents());
 
   function refresh() {
     setEvents(getEvents());
   }
-
-  useEffect(() => {
-    refresh();
-  }, []);
 
   const total = events.length;
   const completed = events.filter((e) => e.name === "recommendation_completed").length;
